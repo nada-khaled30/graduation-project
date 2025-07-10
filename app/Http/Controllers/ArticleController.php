@@ -13,14 +13,33 @@ class ArticleController extends Controller
     public function index(Request $request)
 {
     $query = $request->input('q');
+    $user = Auth::user(); // المستخدم الحالي
+
+    $articles = Article::query();
 
     if ($query) {
-        return Article::where('title', 'like', "%$query%")
-                      ->orWhere('body', 'like', "%$query%")
-                      ->get();
+        $articles->where('title', 'like', "%$query%")
+                 ->orWhere('body', 'like', "%$query%");
     }
 
-    return Article::all();
+    $articles = $articles->get();
+
+    $data = $articles->map(function ($article) use ($user) {
+        return [
+            'id' => $article->id,
+            'title' => $article->title,
+            'body' => $article->body,
+            'image' => $article->image,
+            'created_at' => $article->created_at->format('j M Y'),
+            'favorite' => $user ? $user->favorites->contains($article->id) : false
+        ];
+    });
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Articles retrieved successfully',
+        'data' => $data
+    ]);
 }
 
     // ✅ إنشاء مقالة جديدة
@@ -42,14 +61,23 @@ class ArticleController extends Controller
 
     // ✅ عرض مقالة حسب ID
     public function show($id)
-    {
-        $article = Article::findOrFail($id);
+{
+    $article = Article::findOrFail($id);
+    $user = Auth::user();
 
-        return response()->json([
-            'message' => 'Article retrieved successfully',
-            'data' => $article
-        ], 200);
-    }
+    return response()->json([
+        'message' => 'Article retrieved successfully',
+        'data' => [
+            'id' => $article->id,
+            'title' => $article->title,
+            'body' => $article->body,
+            'image' => $article->image,
+            'created_at' => $article->created_at->format('j M Y'),
+            'favorite' => $user ? $user->favorites->contains($article->id) : false
+        ]
+    ], 200);
+}
+
 
 
     public function toggleFavorite($id)

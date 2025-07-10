@@ -52,12 +52,15 @@ Route::prefix('v1')->group(function () {
         return response()->json('Page Not Found. If error persists, contact info@website.com', 404);
     });
 
-    Route::get('/articles', [ArticleController::class, 'index']);
-    Route::post('/articles', [ArticleController::class, 'store']);
-    Route::get('/articles/{id}', [ArticleController::class, 'show']);
+    
 
     
     Route::group(['middleware' => ['auth:sanctum']], function () {
+
+        Route::get('/articles', [ArticleController::class, 'index']);
+        Route::post('/articles', [ArticleController::class, 'store']);
+        Route::get('/articles/{id}', [ArticleController::class, 'show']);
+
         Route::post('/articles/{id}/favorite', [ArticleController::class, 'toggleFavorite']);
         Route::get('/articles/{id}/share', [ArticleController::class, 'share']);
         Route::get('/articles/{id}/download', [ArticleController::class, 'download']);

@@ -11,25 +11,37 @@ use Illuminate\Support\Facades\Storage;
 class PatientController extends Controller
 {
     // Get a list of all patients (id, full name, profile photo)
-    public function index()
+    public function index(Request $request)
 {
-    $patients = Patient::select('id', 'first_name', 'last_name', 'profile_photo', 'created_at')
-        ->get()
-        ->map(function ($patient) {
-            return [
-                'id' => $patient->id,
-                'full_name' => trim($patient->first_name . ' ' . $patient->last_name),
-                'profile_photo' => $patient->profile_photo ? asset('storage/profile_photos/' . $patient->profile_photo) : null,
-                'created_at' => $patient->created_at->format('j M Y'),
-            ];
+    $query = $request->input('q');
+
+    $patientsQuery = Patient::select('id', 'first_name', 'last_name', 'profile_photo', 'created_at', 'age', 'gender');
+
+    if ($query) {
+        $patientsQuery->where(function ($qBuilder) use ($query) {
+            $qBuilder->where('first_name', 'like', "%$query%")
+                     ->orWhere('last_name', 'like', "%$query%");
         });
+    }
+
+    $patients = $patientsQuery->get()->map(function ($patient) {
+        return [
+            'id' => $patient->id,
+            'full_name' => trim($patient->first_name . ' ' . $patient->last_name),
+            'profile_photo' => $patient->profile_photo ? asset('storage/profile_photos/' . $patient->profile_photo) : null,
+            'age' => $patient->age,
+            'gender' => $patient->gender,
+            'created_at' => $patient->created_at?->format('j M Y'),
+        ];
+    });
 
     return response()->json([
-        'success' => "true",
-        'message' => 'Retrived all Patients successfully',
+        'success' => true,
+        'message' => $query ? 'Search results returned successfully' : 'Retrieved all patients successfully',
         'patients' => $patients
     ]);
 }
+
 
     // Create a new patient and optionally link to a diagnosis
     public function store(Request $request)
@@ -56,11 +68,14 @@ class PatientController extends Controller
     }
 
     $formattedPatient = [
-        'id' => $patient->id,
-        'full_name' => trim($patient->first_name . ' ' . $patient->last_name),
-        'profile_photo' => $patient->profile_photo ? asset('storage/profile_photos/' . $patient->profile_photo) : null,
-        'created_at' => $patient->created_at->format('j M Y'),
-    ];
+    'id' => $patient->id,
+    'full_name' => trim($patient->first_name . ' ' . $patient->last_name),
+    'profile_photo' => $patient->profile_photo ? asset('storage/profile_photos/' . $patient->profile_photo) : null,
+    'age' => $patient->age,
+    'gender' => $patient->gender,
+    'created_at' => $patient->created_at->format('j M Y'),
+];
+
 
     return response()->json([
         'success' => true,
@@ -76,12 +91,15 @@ class PatientController extends Controller
     $patient = Patient::with('diagnoses')->findOrFail($id);
 
     $formattedPatient = [
-        'id' => $patient->id,
-        'full_name' => trim($patient->first_name . ' ' . $patient->last_name),
-        'profile_photo' => $patient->profile_photo ? asset('storage/profile_photos/' . $patient->profile_photo) : null,
-        'created_at' => $patient->created_at->format('j M Y'),
-        'diagnoses' => $patient->diagnoses
-    ];
+    'id' => $patient->id,
+    'full_name' => trim($patient->first_name . ' ' . $patient->last_name),
+    'profile_photo' => $patient->profile_photo ? asset('storage/profile_photos/' . $patient->profile_photo) : null,
+    'age' => $patient->age,
+    'gender' => $patient->gender,
+    'created_at' => $patient->created_at->format('j M Y'),
+    'diagnoses' => $patient->diagnoses
+];
+
 
     return response()->json([
         'success' => true,
@@ -119,11 +137,14 @@ class PatientController extends Controller
     $patient->refresh();
 
     $formattedPatient = [
-        'id' => $patient->id,
-        'full_name' => trim($patient->first_name . ' ' . $patient->last_name),
-        'profile_photo' => $patient->profile_photo ? asset('storage/profile_photos/' . $patient->profile_photo) : null,
-        'created_at' => $patient->created_at->format('j M Y'),
-    ];
+    'id' => $patient->id,
+    'full_name' => trim($patient->first_name . ' ' . $patient->last_name),
+    'profile_photo' => $patient->profile_photo ? asset('storage/profile_photos/' . $patient->profile_photo) : null,
+    'age' => $patient->age,
+    'gender' => $patient->gender,
+    'created_at' => $patient->created_at->format('j M Y'),
+];
+
 
     return response()->json([
         'success' => true,
